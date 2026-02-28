@@ -152,6 +152,9 @@ button:focus-visible {
     --color-sidebar-border: var(--sidebar-border);
 
     --color-sidebar-ring: var(--sidebar-ring);
+
+    --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
 }
 
 /*---break---*/
@@ -295,6 +298,9 @@ button:focus-visible {
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    }
+  html {
+    scrollbar-gutter: stable;
     }
   body {
     @apply bg-background text-foreground;

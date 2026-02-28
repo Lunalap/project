@@ -1,63 +1,50 @@
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Suspense, useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { APP_ROUTES } from "@/routes";
+import { Header } from "@/components/layout/header";
+import { cn } from "@/lib/utils";
+import { ThemeProvider } from "./components/theme-provider";
+import { Skeleton } from "./components/ui/skeleton";
 
-export default function App() {
+function App() {
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeMenu) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => { document.body.style.overflow = "unset"; };
+  }, [activeMenu]);
+
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>Login to your account</CardTitle>
-        <CardDescription>
-          Enter your email below to login to your account
-        </CardDescription>
-        <CardAction>
-          <Button variant="link">Sign Up</Button>
-        </CardAction>
-      </CardHeader>
-      <CardContent>
-        <form>
-          <div className="flex flex-col gap-6">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
-                <a
-                  href="#"
-                  className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                >
-                  Forgot your password?
-                </a>
-              </div>
-              <Input id="password" type="password" required />
-            </div>
+    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+      <Router>
+        <div className="relative min-h-screen flex flex-col bg-white dark:bg-zinc-950 text-black dark:text-zinc-50 transition-colors duration-300">
+          <Header activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
+          <div 
+            className={cn(
+              "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300",
+              activeMenu ? "opacity-100" : "opacity-0 pointer-events-none"
+            )}
+            onClick={() => setActiveMenu(null)}
+          />
+          <div className="pt-20">
+            <Suspense fallback={<Skeleton />}>
+              <main className="pt-20 flex-1">
+                <Routes>
+                  {APP_ROUTES.map((route) => (
+                    <Route key={route.path} path={route.path} element={route.element} />
+                  ))}
+                </Routes>
+              </main>
+            </Suspense>
           </div>
-        </form>
-      </CardContent>
-      <CardFooter className="flex-col gap-2">
-        <Button type="submit" className="w-full">
-          Login
-        </Button>
-        <Button variant="outline" className="w-full">
-          Login with Google
-        </Button>
-      </CardFooter>
-    </Card>
-  )
+        </div>
+      </Router>
+    </ThemeProvider>
+  );
 }
+
+export default App;
