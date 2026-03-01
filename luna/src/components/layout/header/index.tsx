@@ -106,10 +106,10 @@ export function Header({ activeMenu, setActiveMenu }: HeaderProps) {
                   </div>
                   <div>
                     <h5 className="text-[18px] font-black text-black dark:text-white leading-tight tracking-tighter">
-                      {item.title} 추천 혜택
+                      {item.title} 신규 기능
                     </h5>
                     <p className="mt-2 text-[13px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                      현대카드가 제안하는<br />특별한 서비스를 만나보세요.
+                      앱에서 제안하는<br />신규기능을 만나보세요.
                     </p>
                   </div>
                 </div>
@@ -117,7 +117,7 @@ export function Header({ activeMenu, setActiveMenu }: HeaderProps) {
                 {/* sub card */}
                 <div className="group relative mt-auto cursor-pointer">
                   <div className="aspect-[1.5/1] bg-zinc-100 dark:bg-zinc-800 rounded-sm overflow-hidden border border-gray-200 dark:border-zinc-700 flex items-center justify-center transition-transform duration-300 group-hover:scale-[1.02]">
-                    <span className="text-[11px] text-zinc-400 font-bold tracking-widest uppercase">Promotion Card</span>
+                    <span className="text-[11px] text-zinc-400 font-bold tracking-widest uppercase">Promotion Apps</span>
                   </div>
                   <div className="mt-4 flex items-center gap-2 text-[12px] font-bold text-black dark:text-white">
                     자세히 보기 
