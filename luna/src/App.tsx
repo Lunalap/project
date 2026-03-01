@@ -32,7 +32,7 @@ function App() {
           />
           <div className="pt-20">
             <Suspense fallback={<Skeleton />}>
-              <main className="pt-20 flex-1">
+              <main className="pt-0 flex-1">
                 <Routes>
                   {APP_ROUTES.map((route) => (
                     <Route key={route.path} path={route.path} element={route.element} />

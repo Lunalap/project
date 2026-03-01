@@ -1,49 +1,44 @@
 export const NAV_ITEMS = [
   {
-    title: "My Account",
+    title: "예산관리",
     groups: [
       {
-        label: "카드이용내역",
+        label: "실행예산",
         items: [
-          { name: "국내 이용내역", path: "/account/domestic" },
-          { name: "해외 이용내역", path: "/account/overseas" },
-          { name: "이용내역 요약", path: "/account/summary" },
+          { name: "예산등록", path: "/budget/regist" },
+          { name: "예산집행내역", path: "/budget/execution" },
         ],
       },
       {
-        label: "결제",
+        label: "차이분석",
         items: [
-          { name: "자동결제", path: "/account/auto-payment" },
-          { name: "즉시결제", path: "/account/instant-payment" },
-          { name: "결제일변경", path: "/account/payment-date-change" },
+          { name: "예산차이분석", path: "/budget/variance" },
+          { name: "전표내역", path: "/budget/invoice" },
         ],
       },
     ],
   },
   {
-    title: "카드",
+    title: "현금사용",
     groups: [
       { 
-        label: "카드 찾기", 
+        label: "사용계획", 
         items: [
-          { name: "나만의 카드 찾기", path: "/card/search" },
-          { name: "모든 카드", path: "/card/all" },
-          { name: "프리미엄 카드", path: "/card/premium" },
+          { name: "현금사용계획", path: "/cash/usage-plan" },
         ] 
       },
     ]
   },
   {
-    title: "금융",
+    title: "항목설정",
     groups: [
-      { label: "대출", items: [        
-        { name: "단기카드대출", path: "/finance/short-term-loan" },
-        { name: "장기카드대출", path: "/finance/long-term-loan" },
-      ]},
-      { label: "케어", items: [
-        { name: "신용케어", path: "/finance/credit-care" },
-        { name: "금융사기예방", path: "/finance/fraud-prevention" },
-      ]}, 
-    ],
+      { 
+        label: "", 
+        items: [
+          { name: "예산항목", path: "/settings/budget" },
+          { name: "사용자관리", path: "/settings/users" },
+        ] 
+      },
+    ]
   },
 ];
