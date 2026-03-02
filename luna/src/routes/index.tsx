@@ -4,11 +4,13 @@ import { NAV_ITEMS } from "@/constants/menu-data";
 // 개별 페이지들을 lazy 로딩
 const HomePage = lazy(() => import("@/pages/home-page"));
 const BudgetRegist = lazy(() => import("@/pages/budget/regist"));
+const InvoiceList = lazy(() => import("@/pages/invoice/invoice-list"));
 
 // 컴포넌트 매핑 테이블
 const PAGE_COMPONENTS: Record<string, React.ComponentType<React.PropsWithChildren<unknown>>> = {
   "/": HomePage,
   "/budget/regist": BudgetRegist,
+  "/invoice/list": InvoiceList,
 };
 
 const dynamicRoutes = NAV_ITEMS.flatMap((menu) =>

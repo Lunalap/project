@@ -1,11 +1,11 @@
-import { BudgetEntry, BudgetResponse } from "@/types/budget";
+import { InvoiceEntry, InvoiceResponse } from "@/types/invoice";
 
 const DEPARTMENTS = [
-  { code: "246001", name: "인사총무팀" },
-  { code: "246002", name: "IT지원팀" },
-  { code: "246003", name: "마케팅팀" },
-  { code: "246004", name: "영업지원팀" },
-  { code: "246005", name: "재무회계팀" },
+  { code: "246001", name: "공장관리팀" },
+  { code: "246002", name: "생산1팀" },
+  { code: "246003", name: "분석연구팀" },
+  { code: "246004", name: "품질보증팀" },
+  { code: "246005", name: "제조지원팀" },
 ];
 
 const CHARGES = ["김환인", "이혁수", "곽다솜", "김철수", "박지민", "최유리", "정태양"];
@@ -33,47 +33,43 @@ const PURPOSES = [
   "팀별 회식 지원비",
 ];
 
-export const generateMockBudgets = (count: number = 100): BudgetEntry[] => {
+// 100개의 데이터를 생성하는 함수
+export const generateMockInvoices = (count: number = 100): InvoiceEntry[] => {
 
   return Array.from({ length: count }).map((_, index) => {
     const id = (index + 1).toString();
     const dept = DEPARTMENTS[index % DEPARTMENTS.length];
     const cat = CATEGORIES[index % CATEGORIES.length];
     const charge = CHARGES[index % CHARGES.length];
-    const purpose = PURPOSES[index % PURPOSES.length];    
-    const expected = Math.floor(Math.random() * 500) * 1000000 + 100000;
-    const actual = Math.floor(expected * (0.9 + Math.random() * 0.2));
-    const variance = expected - actual;
-    const update_at = new Date(Date.now() - Math.floor(Math.random() * 200000000)).toISOString();
+    const purpose = PURPOSES[index % PURPOSES.length];
+    const actual = Math.floor(Math.random() * 500) * 100000 + 10000;
 
     return {
       id,
-      month: "2026-02",
-      department_code: dept.code,
+      budget_category: cat.sub + "/" + cat.detail,
       department_name: dept.name,
-      charge,
-      main_category_code: (100000 + index).toString(),
-      main_category_name: cat.main,
-      sub_category_code: (102000 + index).toString(),
-      sub_category_name: cat.sub,
-      detail_category_code: (102001 + index).toString(),
-      detail_category_name: cat.detail,
-      tag: cat.tags,
-      purpose,
-      expected_amount: expected,
-      actual_amount: actual,
-      variance_amount: variance,
-      variance_reason: variance > 1000000 || variance < -1000000 ? `${purpose} 예산 추정차액` : "",
-      updated_at: update_at,
+      charge: charge,
+      accouting_date: new Date(Date.now() - Math.floor(Math.random() * 200000000)).toISOString(),
+      invoice_number: `${id.padStart(6, "0")}-EA`,
+      invoice_line_number: Math.floor(Math.random() * 10).toString(),
+      invoice_amount: actual,
+      amount: actual,
+      conversion_amount: 0,
+      account: dept.name,
+      actual_use: purpose,
+      remark: purpose,
+      account_code: `${dept.code}-${cat.main}-${cat.sub}`,
+      account_category: cat.sub + "/" + cat.detail,
+      proof: "증빙없음",
     };
   });
 };
 
-export const MOCK_BUDGET_ENTRIES = generateMockBudgets(100);
+export const MOCK_INVOICE_ENTRIES = generateMockInvoices(100);
 
-export const getMockBudgetResponse = (month: string): BudgetResponse => ({
-  data: MOCK_BUDGET_ENTRIES.filter((item) => item.month === month),
-  total_expected: 322972275,
+export const getMockInvoiceResponse = (month: string): InvoiceResponse => ({
+  data: MOCK_INVOICE_ENTRIES,
+  total_expected: 0,
   total_actual: 0,
   summary_month: month,
 });

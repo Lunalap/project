@@ -13,7 +13,7 @@ export const NAV_ITEMS = [
         label: "차이분석",
         items: [
           { name: "예산차이분석", path: "/budget/variance" },
-          { name: "전표내역", path: "/budget/invoice" },
+          { name: "전표내역", path: "/invoice/list" },
         ],
       },
     ],

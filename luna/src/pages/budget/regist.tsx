@@ -11,6 +11,7 @@ const BudgetRegistrationPage: React.FC = () => {
 
   return (
     <div className="container mx-auto py-10">
+      <h4 className="text-2xl font-bold mb-6">예산등록</h4>
       <DataTable columns={columns} data={budgets} />
     </div>
   );
