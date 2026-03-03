@@ -1,8 +1,9 @@
 /** invoice entry interface */
 export interface InvoiceEntry {
   id: string;                  // unique ID
-  detail_category_name: string;     // budget category
-  department_name: string;      // department name
+  detail_category_name: string;// budget category
+  purpose?: string;            // (optional) purpose matched from budgeting
+  department_name: string;     // department name
   charge: string;              // person in charge
   accouting_date: string;      // accounting date
   invoice_number: string;      // invoice number

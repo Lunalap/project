@@ -43,9 +43,18 @@ export const columns: ColumnDef<InvoiceEntry>[] = [
       </button>
     ),
   },
-
+  {
+    accessorKey: "purpose",
+    header: ({ column }) => (
+      <button
+        className="flex items-center gap-1 hover:text-black transition-colors"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        예산계획 <ArrowUpDown className="h-3 w-3" />
+      </button>
+    ),
+  },
   /*
-
   {
     accessorKey: "reviewer",
     header: "Reviewer",
@@ -79,13 +88,57 @@ export const columns: ColumnDef<InvoiceEntry>[] = [
         </>
       )
     },
-  },
-
-  */ 
-
-
-
+  },*/
   {
+    accessorKey: "amount",
+    header: ({ column }) => (
+      <button
+        className="flex items-center gap-1 hover:text-black transition-colors"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        금액 <ArrowUpDown className="h-3 w-3" />
+      </button>
+    ),
+    cell: ({ row }) => {
+      const amount = row.original.amount;
+
+      if (!amount || amount === 0) return <div className="text-right">-</div>;
+      return <div className={`text-right ${amount === 0 ? "-" : amount < 0 ? "text-red-600" : ""}`}>{amount.toLocaleString()}</div>
+    },
+  },
+  {
+    accessorKey: "account",
+    header: ({ column }) => (
+      <button
+        className="flex items-center gap-1 hover:text-black transition-colors"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        거래처 <ArrowUpDown className="h-3 w-3" />
+      </button>
+    ),
+  },
+  {
+    accessorKey: "actual_use",
+    header: ({ column }) => (
+      <button
+        className="flex items-center gap-1 hover:text-black transition-colors"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        실사용처 <ArrowUpDown className="h-3 w-3" />
+      </button>
+    ),
+  },
+  {
+    accessorKey: "remark",
+    header: ({ column }) => (
+      <button
+        className="flex items-center gap-1 hover:text-black transition-colors"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        적요 <ArrowUpDown className="h-3 w-3" />
+      </button>
+    ),
+  },{
     accessorKey: "department_name",
     header: ({ column }) => (
       <button
@@ -138,56 +191,6 @@ export const columns: ColumnDef<InvoiceEntry>[] = [
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         전표라인 <ArrowUpDown className="h-3 w-3" />
-      </button>
-    ),
-  },
-  {
-    accessorKey: "amount",
-    header: ({ column }) => (
-      <button
-        className="flex items-center gap-1 hover:text-black transition-colors"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        금액 <ArrowUpDown className="h-3 w-3" />
-      </button>
-    ),
-    cell: ({ row }) => {
-      const amount = row.original.amount;
-
-      if (!amount || amount === 0) return <div className="text-right">-</div>;
-      return <div className={`text-right ${amount === 0 ? "-" : amount < 0 ? "text-red-600" : ""}`}>{amount.toLocaleString()}</div>
-    },
-  },
-  {
-    accessorKey: "account",
-    header: ({ column }) => (
-      <button
-        className="flex items-center gap-1 hover:text-black transition-colors"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        거래처 <ArrowUpDown className="h-3 w-3" />
-      </button>
-    ),
-  },
-  {
-    accessorKey: "actual_use",
-    header: ({ column }) => (
-      <button
-        className="flex items-center gap-1 hover:text-black transition-colors"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        실사용처 <ArrowUpDown className="h-3 w-3" />
-      </button>
-    ),
-  },
-  {
-    accessorKey: "remark",
-    header: ({ column }) => (
-      <button
-        className="flex items-center gap-1 hover:text-black transition-colors"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        적요 <ArrowUpDown className="h-3 w-3" />
       </button>
     ),
   },

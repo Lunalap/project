@@ -41,4 +41,16 @@ export const NAV_ITEMS = [
       },
     ]
   },
+  {
+    title: "기능구현",
+    groups: [
+      { 
+        label: "", 
+        items: [
+          { name: "flexiSheet", path: "/cash/list" },
+          { name: "tanstack", path: "/tanstack/list" },
+        ] 
+      },
+    ]
+  },
 ];
