@@ -49,6 +49,8 @@ export function DataTable<TData, TValue>({
     }
   })
 
+  const [globalFilter, setGlobalFilter] = React.useState<string>("");
+
   React.useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(pagination))
   }, [pagination])
@@ -65,14 +67,22 @@ export function DataTable<TData, TValue>({
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
-
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
       pagination,
-    },
+      globalFilter,
+    },    
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: (row, columnId, filterValue) => {
+      const value = String(filterValue).toLowerCase();
+      const account = String(row.getValue("account") ?? "").toLowerCase();
+      const actual_use = String(row.getValue("actual_use") ?? "").toLowerCase();
+
+      return account.includes(value) || actual_use.includes(value);
+    }
   })
 
   return (
@@ -83,25 +93,25 @@ export function DataTable<TData, TValue>({
         <Input
           placeholder="담당자"
           value={(table.getColumn("charge")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("charge")?.setFilterValue(event.target.value)
-          }
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => table.getColumn("charge")?.setFilterValue(event.target.value)}
           className="max-w-30"
         />
         <Input
           placeholder="소분류"
           value={(table.getColumn("detail_category_name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("detail_category_name")?.setFilterValue(event.target.value)
-          }
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => table.getColumn("detail_category_name")?.setFilterValue(event.target.value)}
           className="max-w-40"
         />
         <Input
-          placeholder="예산명"
-          value={(table.getColumn("purpose")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("purpose")?.setFilterValue(event.target.value)
-          }
+          placeholder="거래처"
+          value={(table.getState().globalFilter as string) ?? ""}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => table.setGlobalFilter(event.target.value)}
+          className="max-w-40"
+        />
+        <Input
+          placeholder="적요"
+          value={(table.getColumn("remark")?.getFilterValue() as string) ?? ""}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => table.getColumn("remark")?.setFilterValue(event.target.value)}
           className="max-w-80"
         />
       </div>

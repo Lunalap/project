@@ -33,7 +33,7 @@ export const columns: ColumnDef<InvoiceEntry>[] = [
     header: "id",
   },
   {
-    accessorKey: "budget_category",
+    accessorKey: "detail_category_name",
     header: ({ column }) => (
       <button
         className="flex items-center gap-1 hover:text-black transition-colors"
@@ -67,7 +67,7 @@ export const columns: ColumnDef<InvoiceEntry>[] = [
     cell: ({ row }) => <div className="font-medium">{row.getValue("charge")}</div>,
   },
   {
-    accessorKey: "accouting_date",
+    accessorKey: "accounting_date",
     header: ({ column }) => (
       <button
         className="flex items-center gap-1 hover:text-black transition-colors"

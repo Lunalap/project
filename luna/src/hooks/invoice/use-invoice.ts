@@ -1,3 +1,4 @@
+import type { InvoiceResponse } from "@/types/invoice";
 import { useQuery } from "@tanstack/react-query";
 import { invoiceApi } from "@/services/invoice/invoice-api";
 
@@ -9,8 +10,10 @@ export const useInvoice = (month: string) => {
     queryFn: () => invoiceApi.getMonthlyList(month),
   });
 
+  if (invoiceQuery.isLoading) console.log('useInvoice - Loading invoices...');
+
   return {
-    invoices: invoiceQuery.data?.data ?? [],
+    invoices: invoiceQuery.data ?? [],
     isLoading: invoiceQuery.isLoading,
     isError: invoiceQuery.isError,
   };

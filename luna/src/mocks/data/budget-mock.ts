@@ -1,4 +1,4 @@
-import { BudgetEntry, BudgetResponse } from "@/types/budget";
+import type { BudgetEntry, BudgetResponse } from "@/types/budget";
 
 const DEPARTMENTS = [
   { code: "246001", name: "인사총무팀" },

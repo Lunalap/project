@@ -2,6 +2,7 @@ import React from "react";
 import { useInvoice } from "@/hooks/invoice/use-invoice";
 import { columns } from "./colums";
 import { DataTable } from "./data-table";
+import type { InvoiceEntry } from "@/types/invoice";
 
 const InvoiceListPage: React.FC = () => {
 

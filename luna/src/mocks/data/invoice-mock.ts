@@ -1,4 +1,4 @@
-import { InvoiceEntry, InvoiceResponse } from "@/types/invoice";
+import type { InvoiceEntry, InvoiceResponse } from "@/types/invoice";
 
 const DEPARTMENTS = [
   { code: "246001", name: "공장관리팀" },
