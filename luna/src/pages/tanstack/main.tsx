@@ -12,6 +12,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { useInvoice } from "@/hooks/invoice/use-invoice";
 
 /**
  * 1. Data Type Definition
@@ -53,6 +54,7 @@ const AutocompleteCell = ({
   };
 
   const onSelect = (val: string) => {
+    console.log(val);
     setValue(val);
     updateData(rowId, columnId, val); // 즉각 반영 및 업로드 트리거
   };
@@ -84,26 +86,12 @@ const AutocompleteCell = ({
  * 3. Main Table Page Component
  */
 const InvoiceTablePage: React.FC = () => {
-  const [data, setData] = useState<Invoice[]>([]);
+  const { invoices = [], isLoading } = useInvoice("2026-02");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
-
-  // 데이터 로드 및 리프레시 로직 (Mock)
-  const fetchData = async () => {
-    console.log('Fetching data from server...');
-    // 실제 환경에서는 fetch('/api/invoices') 등을 사용
-    // 첨부된 invoice.json의 샘플 구조를 가져옵니다.
-    const response = await fetch('/path/to/invoice.json'); 
-    const jsonData = await response.json();
-    setData(jsonData);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   // 데이터 업로드 로직 (즉각 반영용)
   const handleUpdateData = async (rowId: number, columnId: string, value: string) => {
@@ -113,7 +101,7 @@ const InvoiceTablePage: React.FC = () => {
     // await fetch(`/api/update/${rowId}`, { method: 'POST', body: JSON.stringify({ [columnId]: value }) });
 
     // 2. 업로드 완료 후 데이터 다시 요청하여 렌더링
-    await fetchData();
+    //await fetchData();
   };
 
   /**
@@ -157,7 +145,7 @@ const InvoiceTablePage: React.FC = () => {
       },
       {
         accessorKey: 'purpose',
-        header: '용도 (Autocomplete)',
+        header: '용도',
         cell: ({ row, column, getValue }) => (
           <AutocompleteCell
             value={getValue() as string}
@@ -176,7 +164,7 @@ const InvoiceTablePage: React.FC = () => {
   );
 
   const table = useReactTable({
-    data,
+    data: invoices,
     columns,
     state: {
       sorting,
@@ -204,11 +192,11 @@ const InvoiceTablePage: React.FC = () => {
     count: rows.length,
     getScrollElement: () => tableContainerRef.current,
     estimateSize: () => 45, // 예상 행 높이
-    overscan: 10,
+    overscan: 30,
   });
 
   return (
-    <div className="p-4 flex flex-col h-screen overflow-hidden font-sans">
+    <div className="p-4 flex flex-col h-[850px] overflow-hidden font-sans">
       <h1 className="text-xl font-bold mb-4">Invoice Management System</h1>
 
       {/* Table Controls (Filtering & Ordering Mock) */}
