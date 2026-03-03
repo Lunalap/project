@@ -5,7 +5,6 @@ export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivEl
   return (
     <div
       className={cn(
-        "min-h-[80vh]",
         "rounded-md",
         // 1. 배경색을 더 명확하게 조절 (대비 증가)
         "bg-zinc-200 dark:bg-zinc-700",
