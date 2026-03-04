@@ -1,10 +1,15 @@
-import type { InvoiceResponse } from "@/types/invoice";
 import { useQuery } from "@tanstack/react-query";
 import { invoiceApi } from "@/services/invoice/invoice-api";
+import type { InvoiceEntry } from "@/types/invoice";
 
-export const useInvoice = (month: string) => {
+interface UseInvoiceReturn {
+  invoices: InvoiceEntry[];
+  isLoading: boolean;
+  isError: boolean;
+}
 
-  // 1. 데이터 가져오기 (Query)
+export const useInvoice = (month: string): UseInvoiceReturn => {
+
   const invoiceQuery = useQuery({
     queryKey: ["invoices", month],
     queryFn: () => invoiceApi.getMonthlyList(month),
@@ -13,7 +18,7 @@ export const useInvoice = (month: string) => {
   if (invoiceQuery.isLoading) console.log('useInvoice - Loading invoices...');
 
   return {
-    invoices: invoiceQuery.data ?? [],
+    invoices: (invoiceQuery.data as unknown as InvoiceEntry[]) ?? [],
     isLoading: invoiceQuery.isLoading,
     isError: invoiceQuery.isError,
   };

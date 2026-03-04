@@ -6,7 +6,7 @@ export const handlers = [
   // simulate budget lists
   http.get("**/api/budgets", ({ request }) => {
     const url = new URL(request.url);
-    const month = url.searchParams.get("month") || "2026-02";    
+    const month = url.searchParams.get("month") || "2026-02";   
     return HttpResponse.json(budget_data_mock);
   }),
 

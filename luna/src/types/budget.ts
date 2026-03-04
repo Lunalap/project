@@ -23,7 +23,4 @@ export interface BudgetEntry {
 /** API response interface */
 export interface BudgetResponse {
   data: BudgetEntry[];
-  total_expected: number;
-  total_actual: number;
-  summary_month: string;
 }

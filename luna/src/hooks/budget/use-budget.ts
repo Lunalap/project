@@ -1,19 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
 import { budgetApi } from "@/services/budget/budget-api";
+import type { BudgetEntry } from "@/types/budget";
 
-export const useBudget = (month: string) => {
+interface UseBudgetReturn {
+  budgets: BudgetEntry[];
+  isLoading: boolean;
+  isError: boolean;
+  dataUpdatedAt: number;
+}
 
-  // 1. 데이터 가져오기 (Query)
+export const useBudget = (month: string): UseBudgetReturn => {
+  // fetch query
   const budgetQuery = useQuery({
     queryKey: ["budgets", month],
     queryFn: () => budgetApi.getMonthlyList(month),
+    select: (response: any) => response.data || response,
   });
-
-  if (budgetQuery.isLoading) console.log('useBudget - Loading budgets...');
-
+  
   return {
     budgets: budgetQuery.data ?? [],
     isLoading: budgetQuery.isLoading,
     isError: budgetQuery.isError,
+    dataUpdatedAt: budgetQuery.dataUpdatedAt,
   };
 };
