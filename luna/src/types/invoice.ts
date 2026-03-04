@@ -5,7 +5,7 @@ export interface InvoiceEntry {
   purpose?: string;            // (optional) purpose matched from budgeting
   department_name: string;     // department name
   charge: string;              // person in charge
-  accouting_date: string;      // accounting date
+  accounting_date: string;      // accounting date
   invoice_number: string;      // invoice number
   invoice_line_number: string; // invoice line number
   //invoice_amount: number;      // invoice amount

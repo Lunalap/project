@@ -14,9 +14,9 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useMutation, useQueryClient, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useInvoice } from "@/hooks/invoice/use-invoice";
+import { useBudget } from "@/hooks/budget/use-budget";
 import { ArrowDownZA, ArrowUpAZ } from "lucide-react";
 import type { InvoiceEntry } from '@/types/invoice';
-import { AutocompleteCell } from './autocomplete';
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -33,8 +33,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-const PURPOSE_OPTIONS = ["운영비", "복리후생비", "접대비", "여비교통비", "소모품비"];
+import type { BudgetEntry } from '@/types/budget';
 
 const updateInvoicePurpose = async ({ id, purpose }: { id: number; purpose: string }) => {
   return new Promise((resolve) => setTimeout(() => resolve({ success: true, id, purpose }), 300));
@@ -43,11 +42,11 @@ const updateInvoicePurpose = async ({ id, purpose }: { id: number; purpose: stri
 // Autocomplete Editable Cell component
 interface AutocompleteCellProps {
   initialValue: string;
-  options: string[];
+  options: BudgetEntry[];
   onUpdate: (value: string) => void;
 }
 
- const AutocompleteCell: React.FC<AutocompleteCellProps> = ({
+const AutocompleteCell: React.FC<AutocompleteCellProps> = ({
   initialValue,
   options,
   onUpdate,
@@ -55,84 +54,85 @@ interface AutocompleteCellProps {
   const [isEditing, setIsEditing] = useState(false);
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(initialValue || "");
-  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setValue(initialValue || "");
   }, [initialValue]);
 
-  // 편집 모드 종료 핸들러
   const handleClose = () => {
     setOpen(false);
     setIsEditing(false);
   };
 
-  // 1. 읽기 모드 (Display Mode)
   if (!isEditing) {
     return (
       <div
-        className="w-full h-8 px-2 flex items-center text-xs cursor-pointer hover:bg-slate-100 rounded transition-colors truncate"
+        className="w-full h-8 px-2 flex items-center text-xs cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-700 rounded transition-colors truncate font-medium"
         onClick={() => setIsEditing(true)}
       >
-        {value || <span className="text-slate-400">선택...</span>}
+        {value || <span className="text-slate-400">예산계획</span>}
       </div>
     );
   }
 
-  // 2. 편집 모드 (Edit Mode)
   return (
-    <div ref={containerRef} className="w-full">
+    <div className="w-full">
       <Popover 
         open={open || isEditing} 
         onOpenChange={(isOpen) => {
           setOpen(isOpen);
-          if (!isOpen) setIsEditing(false); // 팝업 닫히면 편집모드 해제
+          if (!isOpen) setIsEditing(false);
         }}
       >
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            role="combobox"
-            className="w-full h-8 justify-between text-xs font-normal border-blue-500 ring-1 ring-blue-500"
+            className="w-full h-8 justify-between text-xs border-amber-500 ring-1 ring-amber-500"
           >
-            <span className="truncate">{value || "선택..."}</span>
+            <span className="truncate">{value || "예산계획"}</span>
             <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent 
-          className="w-[200px] p-0" 
-          align="start"
-          onPointerDownOutside={handleClose} // 외부 클릭 시 종료
-          onEscapeKeyDown={handleClose}      // ESC 키 입력 시 종료
-        >
-          <Command>
-            <CommandInput 
-              placeholder="검색어 입력..." 
-              className="h-8 text-xs" 
-              autoFocus 
-            />
-            <CommandList>
-              <CommandEmpty>결과가 없습니다.</CommandEmpty>
-              <CommandGroup>
+        <PopoverContent className="w-[400px] p-0" align="start">
+          <Command filter={(value, search) => {
+            // 용도나 소분류명에 검색어가 포함되면 필터링
+            if (value.toLowerCase().includes(search.toLowerCase())) return 1;
+            return 0;
+          }}>
+            <CommandInput placeholder="예산계획 검색..." className="h-8 text-xs" autoFocus />
+            <CommandList className="max-h-[300px]">
+              <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>
+              <CommandGroup header="실행예산 목록">
                 {options.map((opt) => (
                   <CommandItem
-                    key={opt}
-                    value={opt}
-                    onSelect={(currentValue) => {
-                      const newValue = currentValue;
-                      setValue(newValue);
-                      onUpdate(newValue);
+                    key={opt.id}
+                    value={`${opt.detail_category_name} ${opt.purpose}`} // 검색 대상 텍스트 결합
+                    onSelect={() => {
+                      setValue(opt.purpose);
+                      onUpdate(opt.purpose);
                       handleClose();
                     }}
-                    className="text-xs"
+                    className="flex flex-col items-start gap-1 p-2 border-b last:border-0 cursor-pointer"
                   >
-                    <Check
-                      className={cn(
-                        "mr-2 h-3 w-3",
-                        value === opt ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {opt}
+                    <div className="flex w-full justify-between items-center">
+                      <span className="text-[11px] text-gray-500 bg-gray-200 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+                        {opt.detail_category_name}
+                      </span>
+                      <span className="text-[10px] opacity-80">
+                        예산: {opt.expected_amount}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 w-full">
+                      <Check
+                        className={cn(
+                          "h-3 w-3 shrink-0",
+                          value === opt.purpose ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <span className="text-xs truncate">
+                        {opt.purpose}
+                      </span>
+                    </div>
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -141,40 +141,6 @@ interface AutocompleteCellProps {
         </PopoverContent>
       </Popover>
     </div>
-  );
-};
-
-
-// --- 2. Autocomplete Editable Cell 컴포넌트 ---
-const EditablePurposeCell = ({ getValue, row, column, table }: any) => {
-  const initialValue = getValue() as string;
-  const [value, setValue] = useState(initialValue || '');
-  useEffect(() => { setValue(initialValue || ''); }, [initialValue]);
-
-  const onBlurOrEnter = () => {
-    if (value !== initialValue) {
-      table.options.meta?.updateData(row.original.id, value);
-    }
-  };
-
-  return (
-    <>
-      <input
-        type="text"
-        list="purpose-options"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onBlur={onBlurOrEnter}
-        onKeyDown={(e) => e.key === 'Enter' && onBlurOrEnter()}
-        className="border p-1 rounded w-full text-sm text-gray-800 outline-none focus:border-blue-500 text-xs"
-        placeholder="실행예산계획"
-      />
-      <datalist id="purpose-options">
-        {PURPOSE_OPTIONS.map((opt) => (
-          <option key={opt} value={opt} />
-        ))}
-      </datalist>
-    </>
   );
 };
 
@@ -188,7 +154,9 @@ const InvoiceTable = () => {
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 100 });
 
-  const { invoices = [], isLoading } = useInvoice("2026-02");
+  const { invoices = [], isLoading } = useInvoice("2026-02");  
+  const { budgets } = useBudget("2026-02");
+  const PURPOSE_MOCKS = budgets;
 
   const updateMutation = useMutation({
     mutationFn: updateInvoicePurpose,
@@ -220,20 +188,53 @@ const InvoiceTable = () => {
       },
       { accessorKey: 'id', header: 'ID', size: 50 },
       { accessorKey: 'detail_category_name', header: '소분류', size: 150 },
-      { accessorKey: 'purpose', header: '예산계획', size: 100, cell: EditablePurposeCell },
       {
         accessorKey: 'purpose',
-        header: '용도2(Purpose)',
+        header: '예산계획',
         size: 180,
-        cell: ({ row, table }) => (
-          <AutocompleteCell
-            initialValue={row.original.purpose || ""}
-            options={PURPOSE_OPTIONS}
-            onUpdate={(newValue) => {
-              table.options.meta?.updateData(row.original.id, newValue);
-            }}
-          />
-        ),
+        cell: ({ row, table }) => {
+          // 공백으로 인한 매칭 실패 방지를 위해 trim() 적용
+          const currentRowCategory = (row.original.detail_category_name || "").trim();
+          const currentRowDate = (row.original.accounting_date || "").trim();
+          const currentMonth = currentRowDate.substring(0, 7); // "YYYY-MM"
+
+          // --- 1단계: 엄격한 매칭 (월 일치 && 소분류 완전 일치) ---
+          let filteredOptions = PURPOSE_MOCKS.filter((option) => {
+            const isMonthMatch = option.month === currentMonth;
+            const isCategoryStrictMatch = option.detail_category_name.trim() === currentRowCategory;
+            return isMonthMatch && isCategoryStrictMatch;
+          });
+
+          // --- 2단계: 유연한 매칭 (월 일치 && 소분류 부분 일치) ---
+          if (filteredOptions.length === 0 && currentRowCategory.length > 0) {
+            filteredOptions = PURPOSE_MOCKS.filter((option) => {
+              const isMonthMatch = option.month === currentMonth;
+              const targetCat = option.detail_category_name.trim();
+              const isPartialMatch = 
+                targetCat.includes(currentRowCategory) || 
+                currentRowCategory.includes(targetCat);
+              return isMonthMatch && isPartialMatch;
+            });
+          }
+
+          // --- 3단계: 최후의 수단 (해당 월의 전체 목록 노출) ---
+          // 카테고리가 아예 다르더라도 같은 달의 예산이라면 선택지로 제공
+          if (filteredOptions.length === 0) {
+            filteredOptions = PURPOSE_MOCKS.filter((option) => {
+              return option.month === currentMonth;
+            });
+          }
+
+          return (
+            <AutocompleteCell
+              initialValue={row.original.purpose || ""}
+              options={filteredOptions}
+              onUpdate={(newValue) => {
+                table.options.meta?.updateData(row.original.id, newValue);
+              }}
+            />
+          );
+        },
       },
       { accessorKey: 'amount', header: '금액', size: 100,
         cell: ({ row }) => {
@@ -298,10 +299,10 @@ const InvoiceTable = () => {
       <div className="flex gap-2">
         <input
           type="text"
-          placeholder="부서명 검색..."
+          placeholder="작성자"
           className="border p-2 rounded text-sm"
-          value={(table.getColumn('department_name')?.getFilterValue() as string) ?? ''}
-          onChange={(e) => table.getColumn('department_name')?.setFilterValue(e.target.value)}
+          value={(table.getColumn('charge')?.getFilterValue() as string) ?? ''}
+          onChange={(e) => table.getColumn('charge')?.setFilterValue(e.target.value)}
         />
       </div>
 
@@ -320,7 +321,7 @@ const InvoiceTable = () => {
                   <th
                     key={header.id}
                     // [수정] 테두리 유지 및 셀 크기 지정 (스프레드시트 룩)
-                    className="p-2 border-b border-r font-semibold cursor-pointer truncate last:border-r-0 select-none hover:bg-gray-200 text-sm"
+                    className="p-2 border-b border-r font-semibold cursor-pointer truncate last:border-r-0 select-none hover:bg-amber-100 dark:hover:bg-amber-800 text-sm"
                     style={{ width: header.column.getSize(), flexShrink: 0 }}
                     onClick={header.column.getToggleSortingHandler()}
                   >
@@ -359,7 +360,7 @@ const InvoiceTable = () => {
                     width: '100%',
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
-                  className="hover:bg-blue-50 border-b text-xs"
+                  className="hover:bg-amber-100 dark:hover:bg-amber-800 border-b text-xs"
                 >
                   {row.getVisibleCells().map((cell) => {
                     const isAmount = cell.column.id === 'amount';

@@ -70,7 +70,7 @@ export function Header({ activeMenu, setActiveMenu }: HeaderProps) {
             <div 
               key={item.title}
               className={cn(
-                "flex justify-between transition-opacity duration-300 min-h-[350px]", // flex로 변경
+                "flex justify-between transition-opacity duration-300 min-h-[50px]", // flex로 변경
                 activeMenu === item.title ? "opacity-100 flex" : "opacity-0 hidden"
               )}
             >
@@ -116,9 +116,9 @@ export function Header({ activeMenu, setActiveMenu }: HeaderProps) {
 
                 {/* sub card */}
                 <div className="group relative mt-auto cursor-pointer">
-                  <div className="aspect-[1.5/1] bg-zinc-100 dark:bg-zinc-800 rounded-sm overflow-hidden border border-gray-200 dark:border-zinc-700 flex items-center justify-center transition-transform duration-300 group-hover:scale-[1.02]">
+                  {/* <div className="aspect-[1.5/1] bg-zinc-100 dark:bg-zinc-800 rounded-sm overflow-hidden border border-gray-200 dark:border-zinc-700 flex items-center justify-center transition-transform duration-300 group-hover:scale-[1.02]">
                     <span className="text-[11px] text-zinc-400 font-bold tracking-widest uppercase">Promotion Apps</span>
-                  </div>
+                  </div> */}
                   <div className="mt-4 flex items-center gap-2 text-[12px] font-bold text-black dark:text-white">
                     자세히 보기 
                     <span className="text-[14px] transition-transform group-hover:translate-x-1">→</span>
