@@ -1,23 +1,23 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
+  useReactTable,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  useReactTable,
+  ColumnDef,
+  flexRender,
+  SortingState,
+  ColumnFiltersState,
+  RowSelectionState,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { useQuery, useMutation, useQueryClient, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useInvoice } from "@/hooks/invoice/use-invoice";
+import { ArrowDownZA, ArrowUpAZ } from "lucide-react";
 
-/**
- * 1. Data Type Definition
- */
-interface Invoice {
+// --- 1. 타입 정의 및 Mock API ---
+type Invoice = {
   id: number;
   detail_category_name: string;
   department_name: string;
@@ -29,84 +29,101 @@ interface Invoice {
   account: string;
   actual_use: string;
   remark: string;
-  purpose?: string; // 사용자가 추가/수정할 컬럼
-}
+  purpose?: string; // 추가된 purpose 컬럼
+};
 
-/**
- * 2. Editable Autocomplete Cell Component
- */
-const AutocompleteCell = ({
-  value: initialValue,
-  rowId,
-  columnId,
-  updateData,
-}: {
-  value: string;
-  rowId: number;
-  columnId: string;
-  updateData: (rowId: number, columnId: string, value: string) => void;
-}) => {
+// Autocomplete를 위한 목적(purpose) 옵션 목록
+const PURPOSE_OPTIONS = ["운영비", "복리후생비", "접대비", "여비교통비", "소모품비"];
+
+// 가상의 백엔드 API 함수
+const fetchInvoices = async (): Promise<Invoice[]> => {
+  // 실제 환경에서는 fetch('/api/invoices') 등을 사용
+  return Array.from({ length: 500 }).map((_, i) => ({
+    id: i + 1,
+    detail_category_name: "건강보험",
+    department_name: "인사총무팀",
+    charge: "박민정",
+    accounting_date: "2026-02-10",
+    invoice_number: `240101-260204-${String(i + 1).padStart(3, '0')}-EA`,
+    invoice_line_number: 1,
+    amount: "142,797,160",
+    account: "국민건강보험관리공단",
+    actual_use: "국민건강보험관리공단",
+    remark: "2026년 1월 국민건강보험료(판관)",
+    purpose: i % 2 === 0 ? "운영비" : "", // 초기 일부 데이터
+  }));
+};
+
+const updateInvoicePurpose = async ({ id, purpose }: { id: number; purpose: string }) => {
+  return new Promise((resolve) => setTimeout(() => resolve({ success: true, id, purpose }), 300));
+};
+
+// --- 2. Autocomplete Editable Cell 컴포넌트 ---
+const EditablePurposeCell = ({ getValue, row, column, table }: any) => {
+  const initialValue = getValue() as string;
   const [value, setValue] = useState(initialValue || '');
-  const options = ['운영비', '소모품비', '교육훈련비', '사무용품비', '기타'];
 
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(e.target.value);
-  };
+  // 초기값이 (refetch 등으로) 변경되면 상태 동기화
+  useEffect(() => { setValue(initialValue || ''); }, [initialValue]);
 
-  const onSelect = (val: string) => {
-    console.log(val);
-    setValue(val);
-    updateData(rowId, columnId, val); // 즉각 반영 및 업로드 트리거
+  const onBlurOrEnter = () => {
+    if (value !== initialValue) {
+      table.options.meta?.updateData(row.original.id, value);
+    }
   };
 
   return (
-    <div className="relative group">
+    <>
       <input
+        type="text"
+        list="purpose-options"
         value={value}
-        onChange={onChange}
-        className="w-full p-1 border rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-        placeholder="선택 또는 입력..."
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={onBlurOrEnter}
+        onKeyDown={(e) => e.key === 'Enter' && onBlurOrEnter()}
+        className="border p-1 rounded w-full text-sm text-gray-800"
+        placeholder="용도 선택/입력"
       />
-      <div className="absolute z-10 hidden group-focus-within:block w-full bg-white border rounded shadow-lg mt-1">
-        {options.map((opt) => (
-          <div
-            key={opt}
-            onMouseDown={() => onSelect(opt)}
-            className="p-2 hover:bg-gray-100 cursor-pointer text-xs"
-          >
-            {opt}
-          </div>
+      <datalist id="purpose-options">
+        {PURPOSE_OPTIONS.map((opt) => (
+          <option key={opt} value={opt} />
         ))}
-      </div>
-    </div>
+      </datalist>
+    </>
   );
 };
 
-/**
- * 3. Main Table Page Component
- */
-const InvoiceTablePage: React.FC = () => {
-  const { invoices = [], isLoading } = useInvoice("2026-02");
+// --- 3. 메인 테이블 컴포넌트 ---
+const InvoiceTable = () => {
+  const queryClient = useQueryClient();
+
+  // 테이블 상태 관리
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 100 }); // 100개씩 표시
 
-  // 데이터 업로드 로직 (즉각 반영용)
-  const handleUpdateData = async (rowId: number, columnId: string, value: string) => {
-    console.log(`Uploading change: Row ${rowId}, ${columnId} = ${value}`);
-    
-    // 1. 서버에 업로드 (Mock API call)
-    // await fetch(`/api/update/${rowId}`, { method: 'POST', body: JSON.stringify({ [columnId]: value }) });
+  /*// 데이터 Fetching
+  const { data: invoices = [], isLoading } = useQuery({
+    queryKey: ['invoices'],
+    queryFn: fetchInvoices,
+  });
+  */
+  
+  const { invoices, isLoading } = useInvoice("2026-02");
 
-    // 2. 업로드 완료 후 데이터 다시 요청하여 렌더링
-    //await fetchData();
-  };
+  // 데이터 Updating Mutation
+  const updateMutation = useMutation({
+    mutationFn: updateInvoicePurpose,
+    onSuccess: () => {
+      // 변경 성공 시 즉각적으로 데이터를 재요청(refetch)하여 렌더링
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      console.log('')
+      alert('업로드 완료 및 데이터 갱신됨');
+    },
+  });
 
-  /**
-   * 4. Column Definitions
-   */
   const columns = useMemo<ColumnDef<Invoice>[]>(
     () => [
       {
@@ -126,112 +143,96 @@ const InvoiceTablePage: React.FC = () => {
           />
         ),
       },
-      {
-        accessorKey: 'accounting_date',
-        header: '회계일자',
-      },
-      {
-        accessorKey: 'detail_category_name',
-        header: '상세카테고리',
-      },
-      {
-        accessorKey: 'department_name',
-        header: '부서명',
-      },
-      {
-        accessorKey: 'amount',
-        header: '금액',
-        cell: (info) => Number(info.getValue()?.toString().replace(/,/g, '')).toLocaleString(),
-      },
+      { accessorKey: 'id', header: 'ID' },
+      { accessorKey: 'department_name', header: '부서명' },
+      { accessorKey: 'charge', header: '담당자' },
+      { accessorKey: 'amount', header: '금액' },
+      { accessorKey: 'remark', header: '적요' },
       {
         accessorKey: 'purpose',
-        header: '용도',
-        cell: ({ row, column, getValue }) => (
-          <AutocompleteCell
-            value={getValue() as string}
-            rowId={row.original.id}
-            columnId={column.id}
-            updateData={handleUpdateData}
-          />
-        ),
-      },
-      {
-        accessorKey: 'remark',
-        header: '비고',
+        header: '용도 (Purpose)',
+        cell: EditablePurposeCell, // Autocomplete 적용된 커스텀 셀
       },
     ],
     []
   );
 
+  // TanStack Table 인스턴스 생성
   const table = useReactTable({
     data: invoices,
     columns,
     state: {
       sorting,
       columnFilters,
-      columnVisibility,
       rowSelection,
       columnOrder,
+      pagination,
     },
+    enableRowSelection: true,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onColumnOrderChange: setColumnOrder,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    debugTable: true,
+    meta: {
+      // Editable Cell에서 호출할 업데이트 함수
+      updateData: (id: number, purpose: string) => {
+        updateMutation.mutate({ id, purpose });
+      },
+    },
   });
 
-  // 5. Virtualization Setup
+  // --- 4. 가상화 (Virtualization) 설정 ---
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const { rows } = table.getRowModel();
+
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 45, // 예상 행 높이
-    overscan: 30,
+    estimateSize: () => 40, // 행(row)의 대략적인 높이 (px)
+    overscan: 10, // 화면 밖으로 미리 렌더링할 행 개수
   });
 
-  return (
-    <div className="p-4 flex flex-col h-[850px] overflow-hidden font-sans">
-      <h1 className="text-xl font-bold mb-4">Invoice Management System</h1>
+  if (isLoading) return <div>데이터를 불러오는 중입니다...</div>;
 
-      {/* Table Controls (Filtering & Ordering Mock) */}
-      <div className="mb-4 flex gap-2">
+  return (
+    <div className="p-4 space-y-4">
+      {/* 검색/필터링 (Column Filtering) */}
+      <div className="flex gap-2">
         <input
-          placeholder="부서명 필터링..."
+          type="text"
+          placeholder="부서명 검색..."
+          className="border p-2 rounded"
           value={(table.getColumn('department_name')?.getFilterValue() as string) ?? ''}
           onChange={(e) => table.getColumn('department_name')?.setFilterValue(e.target.value)}
-          className="border p-2 rounded text-sm"
         />
-        <button 
-          onClick={() => setColumnOrder(['select', 'purpose', 'amount', 'remark'])} // 순서 변경 예시
-          className="bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300"
-        >
-          컬럼 순서 변경 (샘플)
-        </button>
       </div>
 
-      {/* Virtualized Table Container */}
+      {/* 테이블 영역 (가상화 컨테이너) */}
       <div
         ref={tableContainerRef}
-        className="flex-1 overflow-auto border rounded relative bg-white"
+        className="border rounded shadow"
+        style={{ height: '500px', overflow: 'auto' }} // 스크롤 영역 필수
       >
-        <table className="w-full border-collapse">
-          <thead className="sticky top-0 bg-gray-50 z-20 shadow-sm">
+        <table className="w-full text-left border-collapse">
+          <thead className="bg-gray-100 sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="p-3 text-left text-xs font-semibold text-gray-600 border-b cursor-pointer select-none"
+                    className="p-2 border-b font-semibold cursor-pointer"
                     onClick={header.column.getToggleSortingHandler()}
                   >
                     {flexRender(header.column.columnDef.header, header.getContext())}
-                    {{ asc: ' 🔼', desc: ' 🔽' }[header.column.getIsSorted() as string] ?? null}
+                    {{
+                      asc: <ArrowUpAZ size={16} />,
+                      desc: <ArrowDownZA size={16} />,
+                    }[header.column.getIsSorted() as string] ?? null}
                   </th>
                 ))}
               </tr>
@@ -240,7 +241,7 @@ const InvoiceTablePage: React.FC = () => {
           <tbody
             style={{
               height: `${rowVirtualizer.getTotalSize()}px`,
-              position: 'relative',
+              position: 'relative', // 가상화 필수 스타일
             }}
           >
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
@@ -248,21 +249,17 @@ const InvoiceTablePage: React.FC = () => {
               return (
                 <tr
                   key={row.id}
-                  className={`hover:bg-blue-50 transition-colors ${row.getIsSelected() ? 'bg-blue-100' : ''}`}
                   style={{
                     position: 'absolute',
                     top: 0,
-                    transform: `translateY(${virtualRow.start}px)`,
+                    left: 0,
                     width: '100%',
-                    display: 'flex',
+                    transform: `translateY(${virtualRow.start}px)`, // 위치 계산
                   }}
+                  className="hover:bg-gray-50 border-b"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className="p-2 border-b text-sm overflow-hidden text-ellipsis whitespace-nowrap"
-                      style={{ width: cell.column.getSize() }}
-                    >
+                    <td key={cell.id} className="p-2">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
@@ -273,33 +270,36 @@ const InvoiceTablePage: React.FC = () => {
         </table>
       </div>
 
-      {/* Pagination Controls */}
-      <div className="py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="border px-3 py-1 rounded disabled:opacity-30"
-          >
-            이전
-          </button>
-          <span className="text-sm">
-            {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
-          </span>
-          <button
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="border px-3 py-1 rounded disabled:opacity-30"
-          >
-            다음
-          </button>
-        </div>
-        <div className="text-sm text-gray-500">
-          Selected: {Object.keys(rowSelection).length} rows
-        </div>
+      {/* 페이지네이션 (Pagination) - 100row씩 보여주기 */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          이전
+        </button>
+        <span>
+          페이지 {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
+        </span>
+        <button
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          다음
+        </button>
       </div>
     </div>
   );
 };
 
-export default InvoiceTablePage;
+// 최상위 Query Provider 래핑
+export default function App() {
+  const queryClient = new QueryClient();
+  return (
+    <QueryClientProvider client={queryClient}>
+      <InvoiceTable />
+    </QueryClientProvider>
+  );
+}
