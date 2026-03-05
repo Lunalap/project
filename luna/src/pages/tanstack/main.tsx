@@ -16,7 +16,7 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useMutation, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ArrowDownZA, ArrowUpAZ, Check, Search } from "lucide-react";
+import { ArrowDownZA, ArrowUpAZ, Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from "lucide-react";
 import { useInvoice } from "@/hooks/invoice/use-invoice";
 import { useBudget } from "@/hooks/budget/use-budget";
 import { cn } from "@/lib/utils";
@@ -39,6 +39,8 @@ import type { BudgetEntry } from '@/types/budget';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // --- Types & Constants ---
 const ROW_HEIGHT = 40;
@@ -298,8 +300,7 @@ const InvoiceTable: React.FC = () => {
     getFilteredRowModel: getFilteredRowModel(),
     globalFilterFn: (row, columnId, filterValue) => {const searchValue = filterValue.toLowerCase();
       const account = String(row.original.account ?? "").toLowerCase();
-      const actualUse = String(row.original.actual_use ?? "").toLowerCase();
-      
+      const actualUse = String(row.original.actual_use ?? "").toLowerCase();      
       return account.includes(searchValue) || actualUse.includes(searchValue);
     },
   });
@@ -322,7 +323,7 @@ const InvoiceTable: React.FC = () => {
       <div
         ref={tableContainerRef}
         className="border rounded-md overflow-auto bg-white dark:bg-slate-950 shadow-sm"
-        style={{ height: '700px' }}
+        style={{ height: '800px' }}
       >
         <table className="w-full border-collapse table-fixed">
           <thead className="sticky top-0 z-20 bg-gray-50 dark:bg-slate-900 shadow-sm">
@@ -391,27 +392,52 @@ const InvoiceTable: React.FC = () => {
         </table>
       </div>
 
-      {/*--- pagination ---*/}
+      {/*--- pagination ---*/}      
       <div className="flex items-center gap-2 text-sm">
-        <button
+        <Button
+          variant="outline"
+          size="icon"
+          className="hidden size-8 lg:flex"
+          onClick={() => table.setPageIndex(0)}
+          disabled={!table.getCanPreviousPage()}
+        >
+          <span className="sr-only">처음</span>
+          <ChevronsLeft />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="size-8"
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
-          className="px-3 py-1 border rounded disabled:opacity-50"
         >
-          이전
-        </button>
+          <span className="sr-only">이전</span>
+          <ChevronLeft />
+        </Button>
         <span>
-          페이지 {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
+          Page {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
         </span>
-        <button
+        <Button
+          variant="outline"
+          size="icon"
+          className="size-8"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
-          className="px-3 py-1 border rounded disabled:opacity-50"
         >
-          다음
-        </button>
+          <span className="sr-only">다음</span>
+          <ChevronRight />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="hidden size-8 lg:flex"
+          onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+          disabled={!table.getCanNextPage()}
+        >
+          <span className="sr-only">마지막</span>
+          <ChevronsRight />
+        </Button>
       </div>
-
     </div>
   );
 };
