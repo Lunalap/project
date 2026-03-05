@@ -197,7 +197,7 @@ const InvoiceTable: React.FC = () => {
   const columns = useMemo<ColumnDef<InvoiceEntry>[]>(() => [
     {
       id: 'select',
-      size: 30,
+      size: 40,
       header: ({ table }) => (
         <input
           type="checkbox"
@@ -214,7 +214,15 @@ const InvoiceTable: React.FC = () => {
       ),
     },
     { accessorKey: 'id', header: 'ID', size: 50 },
-    { accessorKey: 'detail_category_name', header: '소분류', size: 150, enableColumnFilter: true },
+    {
+      accessorKey: 'detail_category_name',
+      header: '소분류',
+      size: 150,
+      enableColumnFilter: true,
+      footer: ({ table }) => {
+        return <div>{table.getSelectedRowModel().rows.length} / {table.getFilteredRowModel().rows.length}</div>
+      }
+    },
     {
       accessorKey: 'purpose',
       header: '예산계획',
@@ -239,15 +247,28 @@ const InvoiceTable: React.FC = () => {
     {
       accessorKey: 'amount',
       header: '금액',
-      size: 100,
+      size: 120,
       cell: ({ getValue }) => {
         const amount = Number(getValue() ?? 0);
         return (
-          <span className={cn("font-mono", amount < 0 ? "text-red-600" : "text-foreground")}>
+          <span className={cn(amount < 0 ? "text-red-600" : "text-foreground")}>
             {amount === 0 ? "-" : amount.toLocaleString()}
           </span>
         );
       },
+      footer: ({ table }) => {
+        const selectedRows = table.getSelectedRowModel().rows;
+        const total = selectedRows.reduce((sum, row ) => sum + (Number(row.original.amount) || 0), 0);
+        return (
+          <div className="flex flex-col items-end w-full pr-1">
+            <span className={cn(
+              "font-bold leading-none", total < 0 ? "text-red-600" : ""
+            )}>
+              {total.toLocaleString()}
+            </span>
+          </div>
+        )
+      }
     },
     { accessorKey: 'account', header: '거래처', size: 150, filterFn: 'includesString' },
     { accessorKey: 'actual_use', header: '실사용처', size: 150, filterFn: 'includesString' },
@@ -318,12 +339,13 @@ const InvoiceTable: React.FC = () => {
   if (isLoading) return <div className="p-8 text-center">Now loading...</div>;
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-10 space-y-4">
+      <span className="font-bold">전표내역</span>
       {/* Virtualized Table */}
       <div
         ref={tableContainerRef}
         className="border rounded-md overflow-auto bg-white dark:bg-slate-950 shadow-sm"
-        style={{ height: '800px' }}
+        style={{ height: '750px' }}
       >
         <table className="w-full border-collapse table-fixed">
           <thead className="sticky top-0 z-20 bg-gray-50 dark:bg-slate-900 shadow-sm">
@@ -354,6 +376,7 @@ const InvoiceTable: React.FC = () => {
             ))}
           </thead>
           <tbody
+            className="text-xs"
             style={{
               height: `${rowVirtualizer.getTotalSize()}px`,
               position: 'relative',
@@ -379,7 +402,7 @@ const InvoiceTable: React.FC = () => {
                         className={`p-1.5 border-r last:border-r-0 flex items-center overflow-hidden ${isCurrency ? "text-right" : ""}`}
                         style={{ width: cell.column.getSize(), flexShrink: 0 }}
                       >
-                        <div className="truncate w-full text-[13px]">
+                        <div className="truncate w-full">
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </div>
                       </td>
@@ -389,6 +412,26 @@ const InvoiceTable: React.FC = () => {
               );
             })}
           </tbody>
+
+          {/* --- Sticky Footer for summary --- */}
+          <tfoot className="text-xs sticky bottom-0 z-20 bg-slate-50 dark:bg-slate-800 border-t shadow-[0_-1px_2px_rgba(0,0,0,0.05)]">
+            {table.getFooterGroups().map(footerGroup => (
+              <tr key={footerGroup.id} className="flex w-full pt-2 pb-2">
+                {footerGroup.headers.map(column => (
+                  <td
+                    key={column.id}
+                    className="p-0.5 border-r last:border-r-0 flex items-center"
+                    style={{ width: column.getSize(), flexShrink: 0 }}
+                  >
+                    {flexRender(
+                      column.column.columnDef.footer,
+                      column.getContext()
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tfoot>
         </table>
       </div>
 
