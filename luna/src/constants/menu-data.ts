@@ -47,6 +47,7 @@ export const NAV_ITEMS = [
       { 
         label: "", 
         items: [
+          { name: "spreadsheet", path: "/features/sheetpage" },
           { name: "flexiSheet", path: "/cash/list" },
           { name: "tanstack", path: "/tanstack/list" },
         ] 

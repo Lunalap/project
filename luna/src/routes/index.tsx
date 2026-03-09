@@ -7,6 +7,7 @@ const BudgetRegist = lazy(() => import("@/pages/budget/regist"));
 const InvoiceList = lazy(() => import("@/pages/invoice/invoice-list"));
 const CashList = lazy(() => import("@/pages/cashflow/cash-list"));
 const Tanstack = lazy(() => import("@/pages/tanstack/main"));
+const SpreadsheetPage = lazy(() => import("@/pages/features/spread/sheetpage"));
 
 // 컴포넌트 매핑 테이블
 const PAGE_COMPONENTS: Record<string, React.ComponentType<React.PropsWithChildren<unknown>>> = {
@@ -15,6 +16,7 @@ const PAGE_COMPONENTS: Record<string, React.ComponentType<React.PropsWithChildre
   "/invoice/list": InvoiceList,
   "/cash/list": CashList,
   "/tanstack/list": Tanstack,
+  "/features/sheetpage": SpreadsheetPage,
 };
 
 const dynamicRoutes = NAV_ITEMS.flatMap((menu) =>
