@@ -8,12 +8,6 @@
  * - 인라인 편집 (onBlur / Enter → PATCH)
  * - 낙관적 업데이트 + 롤백
  * - 컬럼 정렬 / 전체 검색 / 체크박스 선택 + 요약바 / 행 추가·삭제
- *
- * 패키지 설치:
- *   npm install @tanstack/react-virtual
- *   npx shadcn@latest add table input badge skeleton button checkbox
- *                        command popover scroll-area
- *   npm install sonner
  */
 
 import {
@@ -399,7 +393,7 @@ export default function SpreadsheetPage({
   allowDelete = true,
 }: SpreadsheetPageProps) {
   const { invoices = [], isLoading: invLoading, isError: invError } = useInvoice(yearMonth);
-  const { budget   = [], isLoading: budLoading, isError: budError  } = useBudget(yearMonth);
+  const { budgets   = [], isLoading: budLoading, isError: budError  } = useBudget(yearMonth);
 
   const [localRows, setLocalRows] = useState<Invoice[]>([]);
   useEffect(() => { setLocalRows(invoices as Invoice[]); }, [invoices]);
@@ -683,7 +677,7 @@ export default function SpreadsheetPage({
                           <ProjectCell
                             projectId={row.project_id as number | null}
                             invoiceId={row.id}
-                            budgets={budget as Budget[]}
+                            budgets={budgets as Budget[]}
                             onSelect={handleProjectSelect}
                           />
                         ) : (

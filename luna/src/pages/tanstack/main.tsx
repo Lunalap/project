@@ -16,7 +16,7 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useMutation, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ArrowDownZA, ArrowUpAZ, Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from "lucide-react";
+import { ArrowDownZA, ArrowUpAZ, Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useInvoice } from "@/hooks/invoice/use-invoice";
 import { useBudget } from "@/hooks/budget/use-budget";
 import { cn } from "@/lib/utils";
@@ -36,11 +36,9 @@ import {
 
 import type { InvoiceEntry } from '@/types/invoice';
 import type { BudgetEntry } from '@/types/budget';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // --- Types & Constants ---
 const ROW_HEIGHT = 40;
@@ -114,13 +112,13 @@ const AutocompleteCell: React.FC<AutocompleteCellProps> = ({
             open && "ring-1 ring-sky-500 border-sky-500 bg-white dark:bg-slate-900"
           )}
         >
-          {value || <span className="text-slate-400">예산계획 선택</span>}
+          {value || <span className="text-slate-400">예산계획 지정</span>}
         </div>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0" align="start">
         <Command filter={(value, search) => (value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0)}>
           <CommandInput placeholder="예산계획 검색..." className="h-8 text-xs" />
-          <CommandList className="max-h-[300px]">
+          <CommandList className="max-h-[400px]">
             <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>
             <CommandGroup heading="실행예산 목록">
               {options.map((opt) => (
@@ -156,15 +154,14 @@ interface FilterProps {
 };
 
 const Filter = ({ column }: FilterProps) => {
-  const columnFilterValue = column.getFilterValue();
-
   return (
     <div className='mt-1'>
       <Input
         type="text"
-        value={(columnFilterValue ?? "") as string}
+        placeholder=""
+        value={(column.getFilterValue() ?? "") as string}
         onChange={e => column.setFilterValue(e.target.value)}
-        className="h-7 w-full text-[11px] px-2 font-normal border-slate-200 focus-visible:ring-sky-500"
+        className="h-7 w-full px-2 rounded-none border-0 border-b-2 focus-visible:ring-0 placeholder:text-slate-300 placeholder:text-xs"
         onClick={(e) => e.stopPropagation()}
       />
     </div>
@@ -178,11 +175,10 @@ const InvoiceTable: React.FC = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [globalFilter, setGlobalFilter] = useState('');
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 100 });
-  
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 100 });  
   // API 데이터 (실제 프로젝트에서는 상위나 Context에서 날짜 관리 권장)
-  const { invoices = [] } = useInvoice("2026-02");
-  const { budgets = [], isLoading } = useBudget("2026-02");
+  const { invoices = [], isLoading: invoicesLoading } = useInvoice("2026-02");
+  const { budgets = [], isLoading: budgetLoading } = useBudget("2026-02");
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, purpose }: { id: number; purpose: string }) => {
@@ -197,7 +193,7 @@ const InvoiceTable: React.FC = () => {
   const columns = useMemo<ColumnDef<InvoiceEntry>[]>(() => [
     {
       id: 'select',
-      size: 40,
+      size: 30,
       header: ({ table }) => (
         <input
           type="checkbox"
@@ -213,11 +209,12 @@ const InvoiceTable: React.FC = () => {
         />
       ),
     },
-    { accessorKey: 'id', header: 'ID', size: 50 },
+    { accessorKey: 'id', header: 'ID', size: 40 },
+    { accessorKey: 'charge', header: '작성자', size: 60, enableColumnFilter: true },
     {
       accessorKey: 'detail_category_name',
       header: '소분류',
-      size: 150,
+      size: 140,
       enableColumnFilter: true,
       footer: ({ table }) => {
         return <div>{table.getSelectedRowModel().rows.length} / {table.getFilteredRowModel().rows.length}</div>
@@ -226,7 +223,7 @@ const InvoiceTable: React.FC = () => {
     {
       accessorKey: 'purpose',
       header: '예산계획',
-      size: 200,
+      size: 180,
       cell: ({ row, table }) => {
         const budgets = table.options.meta?.budgets || [];
         const filteredOptions = getFilteredBudgets(
@@ -247,7 +244,8 @@ const InvoiceTable: React.FC = () => {
     {
       accessorKey: 'amount',
       header: '금액',
-      size: 120,
+      size: 80,
+      enableColumnFilter: true,
       cell: ({ getValue }) => {
         const amount = Number(getValue() ?? 0);
         return (
@@ -270,8 +268,8 @@ const InvoiceTable: React.FC = () => {
         )
       }
     },
-    { accessorKey: 'account', header: '거래처', size: 150, filterFn: 'includesString' },
-    { accessorKey: 'actual_use', header: '실사용처', size: 150, filterFn: 'includesString' },
+    { accessorKey: 'account', header: '거래처', size: 140, enableColumnFilter: true, filterFn: 'includesString' },
+    { accessorKey: 'actual_use', header: '실사용처', size: 140, enableColumnFilter: true, filterFn: 'includesString' },
     {
       accessorKey: 'remark',
       header: '적요',
@@ -296,9 +294,8 @@ const InvoiceTable: React.FC = () => {
         )
       }
      },
-    { accessorKey: 'charge', header: '작성자', size: 80, enableColumnFilter: true },
-    { accessorKey: 'accounting_date', header: '회계일자', size: 90 },
-    { accessorKey: '', header: '예산변경', size: 80 },
+    { accessorKey: 'accounting_date', header: '회계일자', size: 70 },
+    { accessorKey: '', header: '예산변경', size: 70 },
   ], []);
 
   const table = useReactTable({
@@ -336,11 +333,11 @@ const InvoiceTable: React.FC = () => {
     overscan: 10,
   });
 
-  if (isLoading) return <div className="p-8 text-center">Now loading...</div>;
+  if (invoicesLoading) return <div className="p-8 text-center">Now loading...</div>;
 
   return (
     <div className="p-10 space-y-4">
-      <span className="font-bold">전표내역</span>
+      <span className="font-bold">전표내역 {invoices[1].accounting_date}</span>
       {/* Virtualized Table */}
       <div
         ref={tableContainerRef}
@@ -354,7 +351,7 @@ const InvoiceTable: React.FC = () => {
                 {headerGroup.headers.map(header => (
                   <th
                     key={header.id}
-                    className="p-2 border-b border-r last:border-r-0 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                    className="p-2 border-b border-r last:border-r-0 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-200 hover:dark:bg-slate-700 transition-colors"
                     style={{ width: header.getSize(), flexShrink: 0 }}
                     onClick={header.column.getToggleSortingHandler()}
                   >
